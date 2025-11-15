@@ -16,7 +16,6 @@ class TotalAmountSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      //padding: EdgeInsets.symmetric(horizontal: AppPaddings.p20),
       decoration: BoxDecoration(
         color: ColorsManager.primaryColor,
         borderRadius: BorderRadius.circular(AppSizesDouble.s20)
@@ -52,7 +51,7 @@ class TotalAmountSection extends StatelessWidget {
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      Text('${AppConstants.remainingRate <= 0?0:AppConstants.remainingRate}%', style: Theme.of(context).textTheme.titleMedium!.copyWith(fontSize: 20),),
+                      Text('${AppConstants.remainingRate <= 0?0:AppConstants.remainingRate.toStringAsFixed(1)}%', style: Theme.of(context).textTheme.titleMedium!.copyWith(fontSize: 20),),
                       PieChart(
                         PieChartData(
                           sections: [

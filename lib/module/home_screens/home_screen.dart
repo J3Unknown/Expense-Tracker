@@ -9,19 +9,35 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../layout/cubit/main_states.dart';
 import '../../shared/components/components.dart';
+import '../../shared/components/icons_manager.dart';
+import '../../shared/network/local/theme_changer.dart';
 
 class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+  HomeScreen({super.key});
+
+  final ThemeChanger _themeChanger = ThemeChanger();
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<MainCubit, MainStates>(
-      listener: (context, state){},
+      listener: (context, state) {},
       builder: (context, state) => Padding(
-        padding: EdgeInsets.all(AppPaddings.p20),
+        padding: EdgeInsets.symmetric(horizontal: AppPaddings.p20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            Align(
+              alignment: Alignment.topRight,
+              child: IconButton(
+                onPressed: (){
+                  _themeChanger.changeTheme();
+                },
+                icon: Icon(
+                  _themeChanger.isDark?IconsManager.darkThemeIcon:IconsManager.lightThemeIcon,
+                  color: _themeChanger.isDark?ColorsManager.white:ColorsManager.black,
+                )
+              ),
+            ),
             TotalAmountSection(),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -31,7 +47,9 @@ class HomeScreen extends StatelessWidget {
                   backgroundColor: ColorsManager.softRed,
                   amount: AppConstants.monthlyOutcome,
                 ),
-                SizedBox(width: AppSizesDouble.s20,),
+                SizedBox(
+                  width: AppSizesDouble.s20,
+                ),
                 IncomeOutcomeSections(
                   title: StringsManager.income,
                   backgroundColor: ColorsManager.softGreen,
@@ -47,20 +65,27 @@ class HomeScreen extends StatelessWidget {
               children: [
                 Padding(
                   padding: EdgeInsets.symmetric(vertical: AppPaddings.p10),
-                  child: Text(StringsManager.history, style: Theme.of(context).textTheme.headlineLarge,),
+                  child: Text(
+                    StringsManager.history,
+                    style: Theme.of(context).textTheme.headlineLarge,
+                  ),
                 ),
                 Spacer(),
                 TextButton(
-                  onPressed: () {
-                    MainCubit.get(context).changeBottomNavBarIndex(2);
-                  },
-                  child: Text('See More', style: Theme.of(context).textTheme.titleMedium!.copyWith(color: ColorsManager.grey1),))
+                    onPressed: () {
+                      MainCubit.get(context).changeBottomNavBarIndex(2);
+                    },
+                    child: Text(
+                      'See More',
+                      style: Theme.of(context).textTheme.titleMedium!.copyWith(color: ColorsManager.grey1),
+                    ))
               ],
             ),
             Expanded(
               child: HistoryListView(
                 tracks: MainCubit.get(context).recentTracks,
-                state: state
+                state: state,
+                isHistory: true,
               ),
             ),
           ],
@@ -75,12 +100,7 @@ class IncomeOutcomeSections extends StatelessWidget {
   final double amount;
   final Color backgroundColor;
 
-  const IncomeOutcomeSections({
-    super.key,
-    required this.title,
-    required this.amount,
-    required this.backgroundColor
-  });
+  const IncomeOutcomeSections({super.key, required this.title, required this.amount, required this.backgroundColor});
 
   @override
   Widget build(BuildContext context) {
@@ -88,20 +108,28 @@ class IncomeOutcomeSections extends StatelessWidget {
       child: SizedBox(
         height: AppSizesDouble.s120,
         child: Card(
-          color: backgroundColor,
-          margin: EdgeInsets.symmetric(vertical: AppMargins.m20,),
-          child: Padding(
-            padding: EdgeInsets.symmetric(horizontal: AppPaddings.p25),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                FittedBox(child: Text(title, style: Theme.of(context).textTheme.headlineSmall,)),
-                Text(amount.toString(), style: Theme.of(context).textTheme.headlineSmall,),
-              ],
+            color: backgroundColor,
+            margin: EdgeInsets.symmetric(
+              vertical: AppMargins.m20,
             ),
-          )
-        ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: AppPaddings.p25),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  FittedBox(
+                      child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  )),
+                  Text(
+                    amount.toString(),
+                    style: Theme.of(context).textTheme.headlineSmall,
+                  ),
+                ],
+              ),
+            )),
       ),
     );
   }

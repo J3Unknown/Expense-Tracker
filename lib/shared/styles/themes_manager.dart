@@ -5,7 +5,9 @@ ThemeData darkTheme(){
   return ThemeData(
     scaffoldBackgroundColor: ColorsManager.backgroundColor,
     appBarTheme: AppBarTheme(
-      color: ColorsManager.backgroundColor,
+      backgroundColor: ColorsManager.backgroundColor,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: ColorsManager.transparent,
       iconTheme: IconThemeData(
         color: ColorsManager.white
       )
@@ -21,6 +23,32 @@ ThemeData darkTheme(){
       titleMedium: TextStyle(color: ColorsManager.white),
       headlineLarge: TextStyle(color: ColorsManager.white),
       headlineMedium: TextStyle(color: ColorsManager.white),
+    )
+  );
+}
+
+ThemeData lightTheme(){
+  return ThemeData(
+    scaffoldBackgroundColor: ColorsManager.white,
+    appBarTheme: AppBarTheme(
+      backgroundColor: ColorsManager.white,
+      scrolledUnderElevation: 0,
+      surfaceTintColor: ColorsManager.transparent,
+      iconTheme: IconThemeData(
+        color: ColorsManager.black
+      )
+    ),
+    primaryColor: ColorsManager.lightPrimaryColor,
+
+    cardTheme: CardThemeData(
+      color: ColorsManager.lightPrimaryColor
+    ),
+
+    textTheme: TextTheme(
+      displaySmall: TextStyle(color: ColorsManager.black),
+      titleMedium: TextStyle(color: ColorsManager.black),
+      headlineLarge: TextStyle(color: ColorsManager.black),
+      headlineMedium: TextStyle(color: ColorsManager.black),
     )
   );
 }

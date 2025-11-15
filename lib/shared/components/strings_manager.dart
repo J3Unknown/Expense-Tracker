@@ -15,4 +15,5 @@ class KeysManager{
   static const String monthlyAmount = 'monthly-amount';
   static const String currentAmount = 'current-amount';
   static const String monthlyOutcome = 'monthly-outcome';
+  static const String theme = 'theme';
 }

@@ -29,15 +29,28 @@ class _AddNewScreenState extends State<AddNewScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
   late bool isIncome = true;
-  String? selectedDate;
+  late String selectedDate;
 
+  @override
+  void initState() {
+    selectedDate = DateFormat('dd / MM / yyyy').format(DateTime.now());
+    super.initState();
+  }
   @override
   Widget build(BuildContext context) {
     return BlocListener(
       bloc: MainCubit.get(context),
       listener: (context, state) {
         if(state is TrackAddingSuccessState){
-          MainCubit.get(context).changeBottomNavBarIndex(0);
+          _amountController.clear();
+          _titleController.clear();
+          _descriptionController.clear();
+          setState(() {
+            selectedDate = DateFormat('dd / MM / yyyy').format(DateTime.now());
+            category = null;
+            isIncome = true;
+          });
+          MainCubit.get(context).animateToPage(0);
         }
       },
       child: IntrinsicHeight(
@@ -252,9 +265,11 @@ class DefaultTextFormField extends StatelessWidget {
     this.hint,
     this.validator,
     this.maxLines = 1,
+    this.readOnly = false
   }) : _amountController = amountController, _keyboardType = keyboardType;
 
   final TextEditingController _amountController;
+  final bool readOnly;
   final TextInputType _keyboardType;
   final String? hint;
   final String? Function(String? value)? validator;
@@ -266,6 +281,7 @@ class DefaultTextFormField extends StatelessWidget {
       controller: _amountController,
       validator: validator,
       keyboardType: _keyboardType,
+      readOnly: readOnly,
       maxLines: maxLines,
       style: TextStyle(color: ColorsManager.white),
       decoration: InputDecoration(

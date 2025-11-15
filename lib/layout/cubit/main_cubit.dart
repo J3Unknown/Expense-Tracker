@@ -3,10 +3,10 @@ import 'dart:developer';
 import 'package:expense_tracker/shared/components/constants.dart';
 import 'package:expense_tracker/shared/components/strings_manager.dart';
 import 'package:expense_tracker/shared/network/local/shared_preferences.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:expense_tracker/layout/cubit/main_states.dart';
 import 'package:expense_tracker/module/home_screens/add_new_screen.dart';
-import 'package:expense_tracker/module/home_screens/analysis_screen.dart';
 import 'package:expense_tracker/module/home_screens/history_screen.dart';
 import 'package:expense_tracker/module/home_screens/home_screen.dart';
 import 'package:flutter/cupertino.dart';
@@ -26,64 +26,62 @@ class MainCubit extends Cubit<MainStates>{
     // AnalysisScreen(),
   ];
   int index = 0;
+  final PageController pageController = PageController();
 
   List<Track>? recentTracks;
   List<Track>? filteredTracks;
   late Database database;
 
-  void createDatabase() {
+  final String tracksCreateQuery = '''
+    CREATE TABLE tracks (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT NOT NULL,
+      amount REAL NOT NULL,
+      type TEXT NOT NULL CHECK(type IN ('income', 'expense')),
+      date TEXT NOT NULL,
+      category TEXT,
+      note TEXT,
+      year INTEGER,
+      month INTEGER,
+      week INTEGER,
+      day INTEGER,
+      hour INTEGER,
+      minute INTEGER
+    );
+  ''';
+
+  final String valuesCreateQuery = '''
+    CREATE TABLE tracksValues (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      amount REAL NOT NULL Default(0),
+    );
+    
+    INSERT INTO tracksValues (name, amount) 
+    VALUES
+      ('monthlyIncome', 0),
+      ('monthlyOutcome', 0),
+      ('totalAmount', 0);
+  ''';
+
+  void createDatabase() async {
     openDatabase(
       'expense_tracker_database.db',
-      version: 5,
+      version: 6,
       onCreate: (Database database, int version) {
-        database.execute('''
-        CREATE TABLE tracks (
-          id INTEGER NOT NULL AUTOINCREMENT,
-          PRIMARY KEY(id),
-          title TEXT NOT NULL,
-          amount REAL NOT NULL,
-          type TEXT NOT NULL CHECK(type IN ('income', 'expense')),
-          date TEXT NOT NULL,
-          category TEXT,
-          note TEXT,
-          year INTEGER,
-          month INTEGER,
-          week INTEGER,
-          day INTEGER,
-          hour INTEGER,
-          minute INTEGER
-        );
-      ''');
+        database.execute(tracksCreateQuery);
       },
       onUpgrade: (db, int oldVersion, int newVersion) async{
-        if (oldVersion < 5) {
-          db.delete('tracks');
-          db.execute(
-            '''
-              CREATE TABLE tracks (
-                id INTEGER NOT NULL AUTOINCREMENT,
-                PRIMARY KEY(id),
-                title TEXT NOT NULL,
-                amount REAL NOT NULL,
-                type TEXT NOT NULL CHECK(type IN ('income', 'expense')),
-                date TEXT NOT NULL,
-                category TEXT,
-                note TEXT,
-                year INTEGER,
-                month INTEGER,
-                week INTEGER,
-                day INTEGER,
-                hour INTEGER,
-                minute INTEGER
-              );
-            '''
-          );
+        if (oldVersion < 6) {
+          // db.delete('tracks');
+          db.execute(valuesCreateQuery);
         }
+        loadTracksPage(1, 20);
       },
       onOpen: (database) async{
         this.database = database;
         await _loadCaches();
-        loadTracksPage(1, 20);
+        this.database = database;
       },
     ).then((database) {
       this.database = database;
@@ -91,17 +89,7 @@ class MainCubit extends Cubit<MainStates>{
   }
 
   Future<void> _loadCaches() async{
-    // await CacheHelper.saveData(key: KeysManager.monthlyAmount, value: '0');
-    // await CacheHelper.saveData(key: KeysManager.monthlyOutcome, value: '0');
-    // await CacheHelper.saveData(key: KeysManager.currentAmount, value: '0');
-    String monthlyOutcome = await CacheHelper.getData(key: KeysManager.monthlyOutcome)??'0';
-    AppConstants.monthlyOutcome = double.parse(monthlyOutcome);
-    String monthlyAmount = await CacheHelper.getData(key: KeysManager.monthlyAmount)??'0';
-    AppConstants.monthlyAmount = double.parse(monthlyAmount);
-    String moneyAmount = await CacheHelper.getData(key: KeysManager.currentAmount)??'0';
-    AppConstants.moneyAmount = double.parse(moneyAmount);
     AppConstants.remainingRate = AppConstants.moneyAmount != 0?(AppConstants.moneyAmount/AppConstants.monthlyAmount) * 100:0;
-
   }
 
   void loadTracksPage(int page, int pageSize) {
@@ -113,8 +101,10 @@ class MainCubit extends Cubit<MainStates>{
       } else {
         emit(TrackEmptyState());
       }
+      Fluttertoast.showToast(msg: state.toString());
     }).catchError((e) {
       emit(TrackErrorState(e.toString()));
+      Fluttertoast.showToast(msg: state.toString());
     })
     ;
   }
@@ -129,6 +119,11 @@ class MainCubit extends Cubit<MainStates>{
       ''',
       [pageSize, offset]
     );
+    final result2 = await database.rawQuery(
+    '''
+      SELECT * FROM tracksValues
+    ''');
+    List<Track> valuesResult = result2.map((data) {return Track.fromMap(data);}).toList();
     List<Track> mappedResult = result.map((data) {return Track.fromMap(data);}).toList();
     emit(TrackLoadedState(mappedResult));
     return mappedResult;
@@ -246,24 +241,9 @@ class MainCubit extends Cubit<MainStates>{
         ]
       );
     }).then((value) async{
-      _saveCaches(track.type, track.amount);
       loadTracksPage(1, 20);
       emit(TrackAddingSuccessState());
     });
-  }
-
-  void _saveCaches(String type, double amount) async{
-    if(type == 'income'){
-      AppConstants.monthlyAmount += amount;
-      AppConstants.moneyAmount += amount;
-    } else {
-      AppConstants.moneyAmount -= amount;
-      AppConstants.monthlyOutcome += amount;
-    }
-    AppConstants.remainingRate = AppConstants.moneyAmount > 0?((AppConstants.moneyAmount/AppConstants.monthlyAmount) * 100):0;
-    await CacheHelper.saveData(key: KeysManager.currentAmount, value: AppConstants.moneyAmount.toString());
-    await CacheHelper.saveData(key: KeysManager.monthlyAmount, value: AppConstants.monthlyAmount.toString());
-    await CacheHelper.saveData(key: KeysManager.monthlyOutcome, value: AppConstants.monthlyOutcome.toString());
   }
 
   void updateTrack(Track track) async{
@@ -272,11 +252,6 @@ class MainCubit extends Cubit<MainStates>{
 
   void deleteTrack(Track track, {String? selectedCategory, String? selectedType, String? selectedTimePeriod}){
     database.rawDelete('DELETE FROM tracks WHERE id = ? ', [track.id]).then((value) {
-      if(track.type == 'income'){
-        _saveCaches(track.type, -track.amount);
-      } else {
-        _saveCaches(track.type, track.amount);
-      }
       loadTracksPage(1, 20);
       loadTracksWithFilters(page: 1, pageSize: 20, filterType: selectedType, filterCategory: selectedCategory, filterTimeRange: selectedTimePeriod);
       emit(TrackDeleteSuccessState());
@@ -285,6 +260,11 @@ class MainCubit extends Cubit<MainStates>{
 
   void changeBottomNavBarIndex(newIndex){
     index = newIndex;
+    animateToPage(index);
+  }
+
+  void animateToPage(int index){
+    pageController.animateToPage(index, duration: Duration(milliseconds: 350), curve: Curves.fastOutSlowIn);
     emit(ChangeBottomSheetIndexState());
   }
 }
