@@ -1,13 +1,11 @@
 import 'package:expense_tracker/layout/cubit/main_cubit.dart';
 import 'package:expense_tracker/models/details_screen_arguments.dart';
-import 'package:expense_tracker/shared/components/assets_manager.dart';
 import 'package:expense_tracker/shared/components/components.dart';
 import 'package:expense_tracker/shared/components/constants.dart';
 import 'package:expense_tracker/shared/components/values_manager.dart';
 import 'package:expense_tracker/shared/styles/colors_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../models/data_model.dart';
 import '../../shared/components/strings_manager.dart';
@@ -32,7 +30,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     super.initState();
   }
 
-  initAwaits() async{
+  initAwaits() async {
     tracks = await context.read<MainCubit>().loadTracks(1, 20);
   }
 
@@ -49,15 +47,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   items: AppConstants.types,
                   hint: 'Type',
                   selectedItem: typeSelectedItem,
-                  onChanged: (value){
+                  onChanged: (value) {
                     setState(() {
                       typeSelectedItem = value;
-                      if(typeSelectedItem == 'income'){
+                      if (typeSelectedItem == 'income') {
                         setState(() {
                           categorySelectedItem = null;
                           categoryItems = AppConstants.incomeCategories;
                         });
-                      } else{
+                      } else {
                         setState(() {
                           categorySelectedItem = null;
                           categoryItems = AppConstants.outcomeCategories;
@@ -67,7 +65,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   },
                 ),
               ),
-              SizedBox(width: AppPaddings.p15,),
+              SizedBox(
+                width: AppPaddings.p15,
+              ),
               Expanded(
                 child: CustomDropDown(
                   items: categoryItems,
@@ -82,7 +82,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
               ),
             ],
           ),
-          SizedBox(height: AppSizesDouble.s15,),
+          SizedBox(
+            height: AppSizesDouble.s15,
+          ),
           Row(
             children: [
               Expanded(
@@ -114,34 +116,40 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 //   ),
                 // ),
                 child: SizedBox(
-                  width: screenSize(context).width/AppSizesDouble.s2_5,
+                  width: screenSize(context).width / AppSizesDouble.s2_5,
                   child: CustomDropDown(
-                    items: AppConstants.filterItems,
-                    hint: StringsManager.selectPeriod,
-                    selectedItem: selectedDate,
-                    onChanged: (value){
-                      setState(() {
-                        selectedDate = value;
-                      });
-                    }
-                  ),
+                      items: AppConstants.filterItems,
+                      hint: StringsManager.selectPeriod,
+                      selectedItem: selectedDate,
+                      onChanged: (value) {
+                        setState(() {
+                          selectedDate = value;
+                        });
+                      }),
                 ),
               ),
-              SizedBox(width: AppSizesDouble.s15,),
+              SizedBox(
+                width: AppSizesDouble.s15,
+              ),
               ElevatedButton(
-                onPressed: ()async{
+                onPressed: () async {
                   tracks = await MainCubit.get(context).loadTracksWithFilters(
-                    filterCategory: categorySelectedItem,
-                    filterType: typeSelectedItem,
-                    filterTimeRange: selectedDate
-                  );
+                      filterCategory: categorySelectedItem,
+                      filterType: typeSelectedItem,
+                      filterTimeRange: selectedDate);
                 },
                 style: ElevatedButton.styleFrom(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(AppSizesDouble.s10)),
-                  backgroundColor: ColorsManager.rose,
-                  padding: EdgeInsets.symmetric(horizontal: AppPaddings.p30, vertical: AppPaddings.p15)
+                    shape: RoundedRectangleBorder(
+                        borderRadius:
+                            BorderRadius.circular(AppSizesDouble.s10)),
+                    backgroundColor: ColorsManager.rose,
+                    padding: EdgeInsets.symmetric(
+                        horizontal: AppPaddings.p30,
+                        vertical: AppPaddings.p15)),
+                child: Text(
+                  'Apply',
+                  style: TextStyle(color: ColorsManager.white),
                 ),
-                child: Text('Apply', style: TextStyle(color: ColorsManager.white),),
               ),
             ],
           ),
@@ -150,16 +158,18 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
           Expanded(
             child: BlocBuilder(
-              bloc: MainCubit.get(context),
-              builder: (context, state) {
-                return HistoryListView(
-                  tracks: tracks,
-                  state: state,
-                  isHistory: true,
-                  filterItems: FilterItems(type: typeSelectedItem??'', timePeriod: selectedDate??'', category: categorySelectedItem??''),
-                );
-              }
-            ),
+                bloc: MainCubit.get(context),
+                builder: (context, state) {
+                  return HistoryListView(
+                    tracks: tracks,
+                    state: state,
+                    isHistory: true,
+                    filterItems: FilterItems(
+                        type: typeSelectedItem ?? '',
+                        timePeriod: selectedDate ?? '',
+                        category: categorySelectedItem ?? ''),
+                  );
+                }),
           )
         ],
       ),
@@ -168,14 +178,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
 }
 
 class CustomDropDown extends StatefulWidget {
-
-  const CustomDropDown({
-    super.key,
-    required this.items,
-    required this.hint,
-    required this.selectedItem,
-    required this.onChanged
-  });
+  const CustomDropDown(
+      {super.key,
+      required this.items,
+      required this.hint,
+      required this.selectedItem,
+      required this.onChanged});
 
   final List<DropdownMenuItem<String>> items;
   final String hint;
@@ -187,28 +195,35 @@ class CustomDropDown extends StatefulWidget {
 }
 
 class _CustomDropDownState extends State<CustomDropDown> {
-
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(horizontal: AppPaddings.p15),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(AppSizesDouble.s10),
-        color: ColorsManager.primaryColor
-      ),
+          borderRadius: BorderRadius.circular(AppSizesDouble.s10),
+          color: Theme.of(context).primaryColor),
       child: DropdownButton(
         items: widget.items,
         value: widget.selectedItem,
         onChanged: (value) => widget.onChanged(value),
         selectedItemBuilder: (context) => widget.items.map((e) {
-          return DropdownMenuItem(value: e.value, child: Text((e.child as Text).data!, style: Theme.of(context).textTheme.titleMedium, ),);
+          return DropdownMenuItem(
+            value: e.value,
+            child: Text(
+              (e.child as Text).data!,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          );
         }).toList(),
         isExpanded: true,
         underline: SizedBox(),
-        hint: Text(widget.hint, style: TextStyle(color: ColorsManager.white),),
-        icon: Icon(Icons.arrow_drop_down, color: ColorsManager.white),
-        dropdownColor: ColorsManager.primaryColor,
-        style: TextStyle(color: ColorsManager.black),
+        hint: Text(
+          widget.hint,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        icon: Icon(Icons.arrow_drop_down, color: Theme.of(context).textTheme.titleMedium?.color),
+        dropdownColor: Theme.of(context).primaryColor,
+        style: Theme.of(context).textTheme.titleMedium,
       ),
     );
   }

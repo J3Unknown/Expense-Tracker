@@ -1,9 +1,5 @@
-import 'dart:developer';
-
 import 'package:expense_tracker/shared/components/constants.dart';
-import 'package:expense_tracker/shared/components/strings_manager.dart';
-import 'package:expense_tracker/shared/network/local/shared_preferences.dart';
-import 'package:fluttertoast/fluttertoast.dart';
+import 'package:hive/hive.dart';
 import 'package:intl/intl.dart';
 import 'package:expense_tracker/layout/cubit/main_states.dart';
 import 'package:expense_tracker/module/home_screens/add_new_screen.dart';
@@ -11,10 +7,9 @@ import 'package:expense_tracker/module/home_screens/history_screen.dart';
 import 'package:expense_tracker/module/home_screens/home_screen.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:sqflite/sqflite.dart';
 import '../../models/data_model.dart';
 
-class MainCubit extends Cubit<MainStates>{
+class MainCubit extends Cubit<MainStates> {
   MainCubit() : super(InitialState());
 
   static MainCubit get(context) => BlocProvider.of(context);
@@ -23,180 +18,158 @@ class MainCubit extends Cubit<MainStates>{
     HomeScreen(),
     AddNewScreen(),
     HistoryScreen(),
-    // AnalysisScreen(),
   ];
   int index = 0;
   final PageController pageController = PageController();
+  bool isProgrammaticScroll = false;
 
   List<Track>? recentTracks;
   List<Track>? filteredTracks;
-  late Database database;
+  late Box<Track> tracksBox;
 
-  final String tracksCreateQuery = '''
-    CREATE TABLE tracks (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      amount REAL NOT NULL,
-      type TEXT NOT NULL CHECK(type IN ('income', 'expense')),
-      date TEXT NOT NULL,
-      category TEXT,
-      note TEXT,
-      year INTEGER,
-      month INTEGER,
-      week INTEGER,
-      day INTEGER,
-      hour INTEGER,
-      minute INTEGER
-    );
-  ''';
-
-  final String valuesCreateQuery = '''
-    CREATE TABLE tracksValues (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      amount REAL NOT NULL Default(0),
-    );
-    
-    INSERT INTO tracksValues (name, amount) 
-    VALUES
-      ('monthlyIncome', 0),
-      ('monthlyOutcome', 0),
-      ('totalAmount', 0);
-  ''';
-
-  void createDatabase() async {
-    openDatabase(
-      'expense_tracker_database.db',
-      version: 6,
-      onCreate: (Database database, int version) {
-        database.execute(tracksCreateQuery);
-      },
-      onUpgrade: (db, int oldVersion, int newVersion) async{
-        if (oldVersion < 6) {
-          // db.delete('tracks');
-          db.execute(valuesCreateQuery);
-        }
-        loadTracksPage(1, 20);
-      },
-      onOpen: (database) async{
-        this.database = database;
-        await _loadCaches();
-        this.database = database;
-      },
-    ).then((database) {
-      this.database = database;
-    });
+  void initHive() async {
+    tracksBox = await Hive.openBox<Track>('tracks');
+    await _loadCaches();
+    _calculateTotals();
+    loadTracksPage(1, 20);
   }
 
-  Future<void> _loadCaches() async{
-    AppConstants.remainingRate = AppConstants.moneyAmount != 0?(AppConstants.moneyAmount/AppConstants.monthlyAmount) * 100:0;
+  Future<void> _loadCaches() async {
+    var box = await Hive.openBox('cache');
+    AppConstants.monthlyAmount = box.get('monthlyAmount', defaultValue: 0.0);
+    AppConstants.monthlyOutcome = box.get('monthlyOutcome', defaultValue: 0.0);
+    AppConstants.moneyAmount = box.get('moneyAmount', defaultValue: 0.0);
+
+    AppConstants.remainingRate = AppConstants.monthlyAmount != 0
+        ? (AppConstants.moneyAmount / AppConstants.monthlyAmount) * 100
+        : 0;
+  }
+
+  Future<void> _calculateTotals() async {
+    final now = DateTime.now();
+    double currentMonthIncome = 0;
+    double currentMonthOutcome = 0;
+
+    for (var track in tracksBox.values) {
+      if (track.year == now.year && track.month == now.month) {
+        if (track.type == 'income') {
+          currentMonthIncome += track.amount;
+        } else {
+          currentMonthOutcome += track.amount;
+        }
+      }
+    }
+
+    AppConstants.monthlyAmount = currentMonthIncome;
+    AppConstants.monthlyOutcome = currentMonthOutcome;
+    AppConstants.moneyAmount = currentMonthIncome - currentMonthOutcome;
+
+    AppConstants.remainingRate = AppConstants.monthlyAmount != 0
+        ? (AppConstants.moneyAmount / AppConstants.monthlyAmount) * 100
+        : 0;
+
+    var box = await Hive.openBox('cache');
+    await box.put('monthlyAmount', AppConstants.monthlyAmount);
+    await box.put('monthlyOutcome', AppConstants.monthlyOutcome);
+    await box.put('moneyAmount', AppConstants.moneyAmount);
   }
 
   void loadTracksPage(int page, int pageSize) {
     emit(TrackLoadingState());
     recentTracks = [];
-    loadTracks(page, pageSize).then((tracks) {
-      if(tracks.isNotEmpty){
+    try {
+      final tracks = _getPagedTracks(page, pageSize);
+      if (tracks.isNotEmpty) {
         emit(TrackLoadedState(tracks));
       } else {
         emit(TrackEmptyState());
       }
-      Fluttertoast.showToast(msg: state.toString());
-    }).catchError((e) {
+    } catch (e) {
       emit(TrackErrorState(e.toString()));
-      Fluttertoast.showToast(msg: state.toString());
-    })
-    ;
+    }
+  }
+
+  List<Track> _getPagedTracks(int page, int pageSize) {
+    final allTracks = tracksBox.values.toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
+    final offset = (page - 1) * pageSize;
+    if (offset >= allTracks.length) return [];
+    final end = (offset + pageSize) > allTracks.length
+        ? allTracks.length
+        : offset + pageSize;
+    return allTracks.sublist(offset, end);
   }
 
   Future<List<Track>> loadTracks(int page, int pageSize) async {
-    final offset = (page - 1) * pageSize;
-    final result = await database.rawQuery(
-      '''
-        SELECT * FROM tracks
-        ORDER BY date DESC
-        LIMIT ? OFFSET ?
-      ''',
-      [pageSize, offset]
-    );
-    final result2 = await database.rawQuery(
-    '''
-      SELECT * FROM tracksValues
-    ''');
-    List<Track> valuesResult = result2.map((data) {return Track.fromMap(data);}).toList();
-    List<Track> mappedResult = result.map((data) {return Track.fromMap(data);}).toList();
-    emit(TrackLoadedState(mappedResult));
-    return mappedResult;
+    final tracks = _getPagedTracks(page, pageSize);
+    emit(TrackLoadedState(tracks));
+    return tracks;
   }
 
   int? highestIncome;
   int? highestOutcome;
   int? average;
+
   Future<List<Track>> loadTracksWithFilters({
     int page = 1,
     int pageSize = 20,
     String? filterTimeRange,
     String? filterCategory,
     String? filterType,
-  })
-  async {
-    final offset = (page - 1) * pageSize;
+  }) async {
     final now = DateTime.now();
 
-    String timeCondition = '';
-    List<dynamic> timeArgs = [];
+    var tracks = tracksBox.values.toList();
 
-
+    // Apply time-range filter
     if (filterTimeRange != null) {
       switch (filterTimeRange) {
         case 'day':
-          timeCondition = 'AND year = ? AND month = ? AND day = ?';
-          timeArgs = [now.year, now.month, now.day];
+          tracks = tracks
+              .where((t) =>
+                  t.year == now.year &&
+                  t.month == now.month &&
+                  t.day == now.day)
+              .toList();
           break;
         case 'week':
           final weekNumber = _getISOWeekNumber(now);
-          timeCondition = 'AND year = ? AND week = ?';
-          timeArgs = [now.year,weekNumber];
+          tracks = tracks
+              .where((t) => t.year == now.year && t.week == weekNumber)
+              .toList();
           break;
         case 'month':
-          timeCondition = 'AND year = ? AND month = ?';
-          timeArgs = [now.year, now.month];
+          tracks = tracks
+              .where((t) => t.year == now.year && t.month == now.month)
+              .toList();
           break;
         case 'year':
-          timeCondition = 'AND year = ?';
-          timeArgs = [now.year];
-          break;
-        default:
+          tracks = tracks.where((t) => t.year == now.year).toList();
           break;
       }
     }
 
-    String query = 'SELECT * FROM tracks WHERE 1=1';
-
-    final args = <dynamic> [];
-
-    if (timeCondition.isNotEmpty) {
-      query += ' $timeCondition';
-      args.addAll(timeArgs);
-    }
-
     if (filterCategory != null && filterCategory.isNotEmpty) {
-      query += ' AND category = ?';
-      args.add(filterCategory);
+      tracks = tracks.where((t) => t.category == filterCategory).toList();
     }
 
     if (filterType != null && filterType.isNotEmpty) {
-      query += ' AND type = ?';
-      args.add(filterType);
+      tracks = tracks.where((t) => t.type == filterType).toList();
     }
 
-    query += ' ORDER BY date DESC LIMIT ? OFFSET ?';
-    args.addAll([pageSize, offset]);
+    tracks.sort((a, b) => b.date.compareTo(a.date));
 
-    final result = await database.rawQuery(query, args);
-    final mappedResult = result.map((data) => Track.fromMap(data)).toList();
-    emit(FilteredTrackLoadedState(mappedResult));
-    return mappedResult;
+    final offset = (page - 1) * pageSize;
+    if (offset >= tracks.length) {
+      emit(FilteredTrackLoadedState([]));
+      return [];
+    }
+    final end =
+        (offset + pageSize) > tracks.length ? tracks.length : offset + pageSize;
+    final paged = tracks.sublist(offset, end);
+
+    emit(FilteredTrackLoadedState(paged));
+    return paged;
   }
 
   int _getISOWeekNumber(DateTime date) {
@@ -204,14 +177,14 @@ class MainCubit extends Cubit<MainStates>{
     return ((dayOfYear - date.weekday + 10) / 7).floor();
   }
 
-  void addTrack(Track track) async{
+  void addTrack(Track track) async {
     final now = DateTime.now();
     final Track updatedTrack = Track(
-      id: track.id,
       title: track.title,
       amount: track.amount,
       type: track.type,
-      date: "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}",
+      date:
+          "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}",
       category: track.category,
       note: track.note,
       year: now.year,
@@ -222,49 +195,48 @@ class MainCubit extends Cubit<MainStates>{
       minute: now.minute,
     );
     emit(TrackAddingLoadingState());
-    database.transaction((txn) async{
-      txn.rawInsert(
-        'INSERT INTO tracks(title, amount, type, date, category, note, year, month, week, day, hour, minute, second) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)',
-        [
-          updatedTrack.title,
-          updatedTrack.amount,
-          updatedTrack.type,
-          updatedTrack.date,
-          updatedTrack.category,
-          updatedTrack.note,
-          updatedTrack.year,
-          updatedTrack.month,
-          updatedTrack.week,
-          updatedTrack.day,
-          updatedTrack.hour,
-          updatedTrack.minute,
-        ]
-      );
-    }).then((value) async{
-      loadTracksPage(1, 20);
-      emit(TrackAddingSuccessState());
-    });
+    await tracksBox.add(updatedTrack);
+    await _calculateTotals();
+    loadTracksPage(1, 20);
+    emit(TrackAddingSuccessState());
   }
 
-  void updateTrack(Track track) async{
+  void updateTrack(Track track) async {
+    await track.save();
+    await _calculateTotals();
     emit(state);
   }
 
-  void deleteTrack(Track track, {String? selectedCategory, String? selectedType, String? selectedTimePeriod}){
-    database.rawDelete('DELETE FROM tracks WHERE id = ? ', [track.id]).then((value) {
-      loadTracksPage(1, 20);
-      loadTracksWithFilters(page: 1, pageSize: 20, filterType: selectedType, filterCategory: selectedCategory, filterTimeRange: selectedTimePeriod);
-      emit(TrackDeleteSuccessState());
-    });
+  void deleteTrack(Track track,
+      {String? selectedCategory,
+      String? selectedType,
+      String? selectedTimePeriod}) async {
+    await track.delete();
+    await _calculateTotals();
+    emit(TrackDeleteSuccessState());
+    loadTracksPage(1, 20);
+    loadTracksWithFilters(
+        page: 1,
+        pageSize: 20,
+        filterType: selectedType,
+        filterCategory: selectedCategory,
+        filterTimeRange: selectedTimePeriod);
   }
 
-  void changeBottomNavBarIndex(newIndex){
+  void changeBottomNavBarIndex(int newIndex) async {
+    isProgrammaticScroll = true;
     index = newIndex;
-    animateToPage(index);
+    emit(ChangeBottomSheetIndexState());
+    await pageController.animateToPage(index,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.fastOutSlowIn);
+    isProgrammaticScroll = false;
   }
 
-  void animateToPage(int index){
-    pageController.animateToPage(index, duration: Duration(milliseconds: 350), curve: Curves.fastOutSlowIn);
-    emit(ChangeBottomSheetIndexState());
+  void updateNavigationIndex(int newIndex) {
+    if (!isProgrammaticScroll) {
+      index = newIndex;
+      emit(ChangeBottomSheetIndexState());
+    }
   }
 }

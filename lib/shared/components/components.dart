@@ -15,38 +15,60 @@ import 'icons_manager.dart';
 class TrackCard extends StatelessWidget {
   final Track track;
   final FilterItems? filterItems;
-  const TrackCard({
-    super.key,
-    required this.track,
-    this.filterItems
-  });
+  const TrackCard({super.key, required this.track, this.filterItems});
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: () => Navigator.push(context, RoutesGenerator.getRoute(RouteSettings(name: Routes.trackDetails, arguments: DetailsScreenArguments(track, filterItems: filterItems)))),
+      onTap: () => Navigator.push(
+          context,
+          RoutesGenerator.getRoute(RouteSettings(
+              name: Routes.trackDetails,
+              arguments:
+                  DetailsScreenArguments(track, filterItems: filterItems)))),
       child: Card(
         shadowColor: ColorsManager.shadowColor,
         elevation: AppSizesDouble.s5,
         child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: AppPaddings.p5, vertical: AppPaddings.p20),
+          padding: EdgeInsets.symmetric(
+              horizontal: AppPaddings.p5, vertical: AppPaddings.p20),
           child: Row(
             children: [
               Padding(
                 padding: EdgeInsets.symmetric(horizontal: AppPaddings.p15),
-                child: SvgPicture.asset(track.type.getIcon(), width: AppSizesDouble.s40,),
+                child: SvgPicture.asset(
+                  track.type.getIcon(),
+                  width: AppSizesDouble.s40,
+                ),
               ),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(track.title, style: Theme.of(context).textTheme.headlineLarge!.copyWith(fontWeight: FontWeight.bold), maxLines: AppSizes.s1, overflow: TextOverflow.ellipsis,),
-                    Text(track.amount.toString(), style: Theme.of(context).textTheme.headlineSmall!.copyWith(color: ColorsManager.grey1), maxLines: AppSizes.s1, overflow: TextOverflow.ellipsis)
+                    Text(
+                      track.title,
+                      style: Theme.of(context)
+                          .textTheme
+                          .headlineLarge!
+                          .copyWith(fontWeight: FontWeight.bold),
+                      maxLines: AppSizes.s1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(track.amount.toString(),
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall!
+                            .copyWith(color: ColorsManager.grey1),
+                        maxLines: AppSizes.s1,
+                        overflow: TextOverflow.ellipsis)
                   ],
                 ),
               ),
-              Icon(IconsManager.rightArrowIcon, color: ColorsManager.white,),
+              Icon(
+                IconsManager.rightArrowIcon,
+                color: ColorsManager.white,
+              ),
             ],
           ),
         ),
@@ -56,13 +78,12 @@ class TrackCard extends StatelessWidget {
 }
 
 class HistoryListView extends StatelessWidget {
-  const HistoryListView({
-    super.key,
-    required this.tracks,
-    required this.state,
-    this.isHistory = false,
-    this.filterItems
-  });
+  const HistoryListView(
+      {super.key,
+      required this.tracks,
+      required this.state,
+      this.isHistory = false,
+      this.filterItems});
 
   final List<Track>? tracks;
   final dynamic state;
@@ -71,18 +92,27 @@ class HistoryListView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ConditionalBuilder(
-      condition: tracks != null && tracks!.isNotEmpty && state is !TrackLoadingState,
+      condition:
+          tracks != null && tracks!.isNotEmpty && state is! TrackLoadingState,
       builder: (context) => ListView.separated(
-        physics: !isHistory?NeverScrollableScrollPhysics():BouncingScrollPhysics(),
+        physics: !isHistory
+            ? NeverScrollableScrollPhysics()
+            : BouncingScrollPhysics(),
         itemBuilder: (context, index) => TrackCard(
           track: tracks![index],
           filterItems: filterItems,
         ),
-        itemCount: isHistory? tracks!.length: tracks!.length < 3? tracks!.length:3,
-        separatorBuilder: (context, index) => SizedBox(height: AppSizesDouble.s10,),
+        itemCount: isHistory
+            ? tracks!.length
+            : tracks!.length < 3
+                ? tracks!.length
+                : 3,
+        separatorBuilder: (context, index) => SizedBox(
+          height: AppSizesDouble.s10,
+        ),
       ),
       fallback: (context) {
-        if(state is TrackLoadedState && tracks == null){
+        if (state is TrackLoadedState && tracks == null) {
           return Center(child: CircularProgressIndicator());
         }
         return Center(
@@ -90,7 +120,7 @@ class HistoryListView extends StatelessWidget {
             padding: EdgeInsets.all(AppPaddings.p10),
             child: Text(
               StringsManager.emptyTracksMessage,
-              style: Theme.of(context).textTheme.headlineSmall!.copyWith(color: ColorsManager.white),
+              style: Theme.of(context).textTheme.headlineSmall,
               textAlign: TextAlign.center,
             ),
           ),
@@ -100,16 +130,15 @@ class HistoryListView extends StatelessWidget {
   }
 }
 
-extension GetIconExtension on String{
-  String getIcon(){
-    switch(this){
+extension GetIconExtension on String {
+  String getIcon() {
+    switch (this) {
       case 'income':
         return AssetsManager.income;
       case 'expense':
         return AssetsManager.outcome;
       default:
         return AssetsManager.income;
-
     }
   }
 }

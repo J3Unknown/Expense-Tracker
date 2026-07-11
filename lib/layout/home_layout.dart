@@ -14,8 +14,6 @@ class HomeLayout extends StatefulWidget {
 }
 
 class _HomeLayoutState extends State<HomeLayout> {
-  bool isBottomNavTap = false;
-
   @override
   Widget build(BuildContext context) {
     MainCubit cubit = MainCubit.get(context);
@@ -46,17 +44,13 @@ class _HomeLayoutState extends State<HomeLayout> {
               controller: cubit.pageController,
               children: cubit.screens,
               onPageChanged: (index){
-                if(!isBottomNavTap){
-                  cubit.changeBottomNavBarIndex(index);
-                }
-                isBottomNavTap = false;
+                cubit.updateNavigationIndex(index);
               },
             ),
           ),
           bottomNavigationBar: BottomNavBar(
             index: cubit.index,
             onTap: (newIndex){
-              isBottomNavTap = true;
               cubit.changeBottomNavBarIndex(newIndex);
             },
           ),

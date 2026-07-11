@@ -1,20 +1,46 @@
-class Track {
-  final int id;
+import 'package:hive/hive.dart';
+
+part 'data_model.g.dart';
+
+@HiveType(typeId: 0)
+class Track extends HiveObject {
+  @HiveField(0)
   final String title;
+
+  @HiveField(1)
   final double amount;
+
+  @HiveField(2)
   final String type;
+
+  @HiveField(3)
   final String date;
+
+  @HiveField(4)
   final String category;
+
+  @HiveField(5)
   final String note;
+
+  @HiveField(6)
   final int year;
+
+  @HiveField(7)
   final int month;
+
+  @HiveField(8)
   final int week;
+
+  @HiveField(9)
   final int day;
+
+  @HiveField(10)
   final int hour;
+
+  @HiveField(11)
   final int minute;
 
   Track({
-    required this.id,
     required this.title,
     required this.amount,
     required this.type,
@@ -31,7 +57,6 @@ class Track {
 
   Map<String, dynamic> toMap() {
     return {
-      'id': id,
       'title': title,
       'amount': amount,
       'type': type,
@@ -49,7 +74,6 @@ class Track {
 
   factory Track.fromMap(Map<String, dynamic> map) {
     return Track(
-      id: map['id'],
       title: map['title'],
       amount: map['amount'],
       type: map['type'],

@@ -21,6 +21,7 @@ ThemeData darkTheme(){
     textTheme: TextTheme(
       displaySmall: TextStyle(color: ColorsManager.white),
       titleMedium: TextStyle(color: ColorsManager.white),
+      headlineSmall: TextStyle(color: ColorsManager.white),
       headlineLarge: TextStyle(color: ColorsManager.white),
       headlineMedium: TextStyle(color: ColorsManager.white),
     )
@@ -47,6 +48,7 @@ ThemeData lightTheme(){
     textTheme: TextTheme(
       displaySmall: TextStyle(color: ColorsManager.black),
       titleMedium: TextStyle(color: ColorsManager.black),
+      headlineSmall: TextStyle(color: ColorsManager.black),
       headlineLarge: TextStyle(color: ColorsManager.black),
       headlineMedium: TextStyle(color: ColorsManager.black),
     )

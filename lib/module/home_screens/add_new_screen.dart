@@ -36,12 +36,13 @@ class _AddNewScreenState extends State<AddNewScreen> {
     selectedDate = DateFormat('dd / MM / yyyy').format(DateTime.now());
     super.initState();
   }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener(
       bloc: MainCubit.get(context),
       listener: (context, state) {
-        if(state is TrackAddingSuccessState){
+        if (state is TrackAddingSuccessState) {
           _amountController.clear();
           _titleController.clear();
           _descriptionController.clear();
@@ -50,7 +51,7 @@ class _AddNewScreenState extends State<AddNewScreen> {
             category = null;
             isIncome = true;
           });
-          MainCubit.get(context).animateToPage(0);
+          MainCubit.get(context).changeBottomNavBarIndex(0);
         }
       },
       child: IntrinsicHeight(
@@ -60,7 +61,7 @@ class _AddNewScreenState extends State<AddNewScreen> {
           padding: EdgeInsets.all(AppPaddings.p15),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(AppSizesDouble.s20),
-            color: ColorsManager.primaryColor,
+            color: Theme.of(context).primaryColor,
           ),
           child: Form(
             key: _formKey,
@@ -68,26 +69,36 @@ class _AddNewScreenState extends State<AddNewScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text('Title', style: Theme.of(context).textTheme.headlineLarge,),
-                  SizedBox(height: AppSizesDouble.s10,),
+                  Text(
+                    'Title',
+                    style: Theme.of(context).textTheme.headlineLarge,
+                  ),
+                  SizedBox(
+                    height: AppSizesDouble.s10,
+                  ),
                   DefaultTextFormField(
                     amountController: _titleController,
                     keyboardType: TextInputType.text,
                     hint: 'payed for.....',
-                    validator: (String? value){
-                      if(value != null && value.isEmpty){
+                    validator: (String? value) {
+                      if (value != null && value.isEmpty) {
                         return "Title must not be empty";
                       }
                       return null;
                     },
                   ),
-                  Text('Amount', style: Theme.of(context).textTheme.headlineLarge,),
-                  SizedBox(height: AppSizesDouble.s10,),
+                  Text(
+                    'Amount',
+                    style: Theme.of(context).textTheme.headlineLarge,
+                  ),
+                  SizedBox(
+                    height: AppSizesDouble.s10,
+                  ),
                   DefaultTextFormField(
                     amountController: _amountController,
                     hint: 'Egy',
-                    validator: (String? value){
-                      if(value != null && value.isEmpty){
+                    validator: (String? value) {
+                      if (value != null && value.isEmpty) {
                         return "Amount must not be empty";
                       }
                       return null;
@@ -100,13 +111,13 @@ class _AddNewScreenState extends State<AddNewScreen> {
                     height: AppSizesDouble.s50,
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(AppSizesDouble.s10),
-                      color: ColorsManager.backgroundColor,
+                      color: Theme.of(context).scaffoldBackgroundColor,
                     ),
                     child: Row(
                       children: [
                         Expanded(
                           child: InkWell(
-                            onTap: (){
+                            onTap: () {
                               setState(() {
                                 isIncome = true;
                                 category = null;
@@ -116,17 +127,34 @@ class _AddNewScreenState extends State<AddNewScreen> {
                               alignment: Alignment.center,
                               height: AppSizesDouble.s50,
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(AppSizesDouble.s10),
-                                color: isIncome? ColorsManager.rose:ColorsManager.backgroundColor,
+                                borderRadius:
+                                    BorderRadius.circular(AppSizesDouble.s10),
+                                color: isIncome
+                                    ? ColorsManager.rose
+                                    : Theme.of(context).scaffoldBackgroundColor,
                               ),
-                              child: Text(StringsManager.income, style: Theme.of(context).textTheme.displaySmall!.copyWith(color: !isIncome? ColorsManager.white:ColorsManager.black),),
+                              child: Text(
+                                StringsManager.income,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .displaySmall!
+                                    .copyWith(
+                                        color: isIncome
+                                            ? ColorsManager.black
+                                            : Theme.of(context)
+                                                .textTheme
+                                                .displaySmall
+                                                ?.color),
+                              ),
                             ),
                           ),
                         ),
-                        SizedBox(width: AppSizesDouble.s3,),
+                        SizedBox(
+                          width: AppSizesDouble.s3,
+                        ),
                         Expanded(
                           child: InkWell(
-                            onTap: (){
+                            onTap: () {
                               setState(() {
                                 isIncome = false;
                                 category = null;
@@ -136,54 +164,81 @@ class _AddNewScreenState extends State<AddNewScreen> {
                               alignment: Alignment.center,
                               height: AppSizesDouble.s50,
                               decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(AppSizesDouble.s10),
-                                color: !isIncome? ColorsManager.rose:ColorsManager.backgroundColor,
+                                borderRadius:
+                                    BorderRadius.circular(AppSizesDouble.s10),
+                                color: !isIncome
+                                    ? ColorsManager.rose
+                                    : Theme.of(context).scaffoldBackgroundColor,
                               ),
-                              child: Text(StringsManager.outcome, style: Theme.of(context).textTheme.displaySmall!.copyWith(color: isIncome? ColorsManager.white:ColorsManager.black),),
+                              child: Text(
+                                StringsManager.outcome,
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .displaySmall!
+                                    .copyWith(
+                                        color: !isIncome
+                                            ? ColorsManager.black
+                                            : Theme.of(context)
+                                                .textTheme
+                                                .displaySmall
+                                                ?.color),
+                              ),
                             ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  Text('Category', style: Theme.of(context).textTheme.headlineLarge,),
-                  SizedBox(height: AppSizesDouble.s10,),
-                  if(!isIncome)
-                  CustomDropDown(
-                    items: AppConstants.outcomeCategories,
-                    hint: 'Outcome Category',
-                    selectedItem: category,
-                    onChanged: (value){
-                      setState(() {
-                        category = value;
-                      });
-                    }
+                  Text(
+                    'Category',
+                    style: Theme.of(context).textTheme.headlineLarge,
                   ),
-                  if(isIncome)
-                  CustomDropDown(
-                      items: AppConstants.incomeCategories,
-                      hint: 'Income Category',
-                      selectedItem: category,
-                      onChanged: (value){
-                        setState(() {
-                          category = value;
-                        });
-                      }
+                  SizedBox(
+                    height: AppSizesDouble.s10,
                   ),
-                  SizedBox(height: AppSizesDouble.s15,),
-                  Text('Date', style: Theme.of(context).textTheme.headlineLarge,),
-                  SizedBox(height: AppSizesDouble.s10,),
+                  if (!isIncome)
+                    CustomDropDown(
+                        items: AppConstants.outcomeCategories,
+                        hint: 'Outcome Category',
+                        selectedItem: category,
+                        onChanged: (value) {
+                          setState(() {
+                            category = value;
+                          });
+                        }),
+                  if (isIncome)
+                    CustomDropDown(
+                        items: AppConstants.incomeCategories,
+                        hint: 'Income Category',
+                        selectedItem: category,
+                        onChanged: (value) {
+                          setState(() {
+                            category = value;
+                          });
+                        }),
+                  SizedBox(
+                    height: AppSizesDouble.s15,
+                  ),
+                  Text(
+                    'Date',
+                    style: Theme.of(context).textTheme.headlineLarge,
+                  ),
+                  SizedBox(
+                    height: AppSizesDouble.s10,
+                  ),
                   InkWell(
                     onTap: () {
                       showDatePicker(
-                        context: context,
-                        firstDate: DateTime.now().subtract(Duration(days: 60)),
-                        lastDate: DateTime.now(),
-                        initialDate: DateTime.now()
-                      ).then((value){
-                        if(value != null){
+                              context: context,
+                              firstDate:
+                                  DateTime.now().subtract(Duration(days: 60)),
+                              lastDate: DateTime.now(),
+                              initialDate: DateTime.now())
+                          .then((value) {
+                        if (value != null) {
                           setState(() {
-                            selectedDate = DateFormat('dd / MM / yyyy').format(value);
+                            selectedDate =
+                                DateFormat('dd / MM / yyyy').format(value);
                           });
                         }
                       });
@@ -192,21 +247,36 @@ class _AddNewScreenState extends State<AddNewScreen> {
                       alignment: Alignment.center,
                       padding: EdgeInsets.all(AppPaddings.p20),
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(AppSizesDouble.s10),
-                        color: ColorsManager.backgroundColor
-                      ),
+                          borderRadius:
+                              BorderRadius.circular(AppSizesDouble.s10),
+                          color: Theme.of(context).scaffoldBackgroundColor),
                       height: 60,
                       child: Row(
                         children: [
-                          Expanded(child: Text(selectedDate??'Select Transaction date', style: Theme.of(context).textTheme.titleMedium!.copyWith(color: ColorsManager.white),)),
-                          Icon(IconsManager.dateIcon, color: ColorsManager.white,)
+                          Expanded(
+                              child: Text(
+                            selectedDate,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          )),
+                          Icon(
+                            IconsManager.dateIcon,
+                            color:
+                                Theme.of(context).textTheme.titleMedium?.color,
+                          )
                         ],
                       ),
                     ),
                   ),
-                  SizedBox(height: AppSizesDouble.s15,),
-                  Text('Description', style: Theme.of(context).textTheme.headlineLarge,),
-                  SizedBox(height: AppSizesDouble.s10,),
+                  SizedBox(
+                    height: AppSizesDouble.s15,
+                  ),
+                  Text(
+                    'Description',
+                    style: Theme.of(context).textTheme.headlineLarge,
+                  ),
+                  SizedBox(
+                    height: AppSizesDouble.s10,
+                  ),
                   DefaultTextFormField(
                     amountController: _descriptionController,
                     keyboardType: TextInputType.multiline,
@@ -217,35 +287,38 @@ class _AddNewScreenState extends State<AddNewScreen> {
                     height: AppSizesDouble.s50,
                     width: double.infinity,
                     child: ElevatedButton(
-                      onPressed: (){
-                        if(_formKey.currentState!.validate()){
-                          MainCubit.get(context).addTrack(
-                            Track(
-                              id: 0,
-                              title: _titleController.text,
-                              amount: double.parse(_amountController.text),
-                              type: isIncome?'income':'expense',
-                              date: selectedDate!,
-                              category: category!,
-                              note: _descriptionController.text,
-                              year: int.parse(selectedDate!.split('/').first),
-                              month: int.parse(selectedDate!.split('/')[1]),
-                              week: (int.parse(selectedDate!.split('/').last)/7).ceil(),
-                              day: int.parse(selectedDate!.split('/').last),
-                              hour: DateTime.now().hour,
-                              minute: DateTime.now().minute
-                            )
-                          );
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: ColorsManager.rose,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(AppSizesDouble.s10),
-                        )
-                      ),
-                      child: Text('Add', style: Theme.of(context).textTheme.headlineSmall!.copyWith(color: ColorsManager.white),)
-                    ),
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            MainCubit.get(context).addTrack(Track(
+                                title: _titleController.text,
+                                amount: double.parse(_amountController.text),
+                                type: isIncome ? 'income' : 'expense',
+                                date: selectedDate,
+                                category: category!,
+                                note: _descriptionController.text,
+                                year: int.parse(selectedDate.split('/').first),
+                                month: int.parse(selectedDate.split('/')[1]),
+                                week: (int.parse(selectedDate.split('/').last) /
+                                        7)
+                                    .ceil(),
+                                day: int.parse(selectedDate.split('/').last),
+                                hour: DateTime.now().hour,
+                                minute: DateTime.now().minute));
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                            backgroundColor: ColorsManager.rose,
+                            shape: RoundedRectangleBorder(
+                              borderRadius:
+                                  BorderRadius.circular(AppSizesDouble.s10),
+                            )),
+                        child: Text(
+                          'Add',
+                          style: Theme.of(context)
+                              .textTheme
+                              .headlineSmall!
+                              .copyWith(color: ColorsManager.white),
+                        )),
                   )
                 ],
               ),
@@ -258,15 +331,16 @@ class _AddNewScreenState extends State<AddNewScreen> {
 }
 
 class DefaultTextFormField extends StatelessWidget {
-  const DefaultTextFormField({
-    super.key,
-    required TextEditingController amountController,
-    TextInputType keyboardType = TextInputType.number,
-    this.hint,
-    this.validator,
-    this.maxLines = 1,
-    this.readOnly = false
-  }) : _amountController = amountController, _keyboardType = keyboardType;
+  const DefaultTextFormField(
+      {super.key,
+      required TextEditingController amountController,
+      TextInputType keyboardType = TextInputType.number,
+      this.hint,
+      this.validator,
+      this.maxLines = 1,
+      this.readOnly = false})
+      : _amountController = amountController,
+        _keyboardType = keyboardType;
 
   final TextEditingController _amountController;
   final bool readOnly;
@@ -283,14 +357,23 @@ class DefaultTextFormField extends StatelessWidget {
       keyboardType: _keyboardType,
       readOnly: readOnly,
       maxLines: maxLines,
-      style: TextStyle(color: ColorsManager.white),
+      style: Theme.of(context).textTheme.titleMedium,
       decoration: InputDecoration(
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(AppSizesDouble.s10),),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(AppSizesDouble.s10),),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSizesDouble.s10),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppSizesDouble.s10),
+        ),
         filled: true,
         hintText: hint,
-        hintStyle: TextStyle(color: ColorsManager.white.withValues(alpha: AppSizesDouble.s0_5)),
-        fillColor: ColorsManager.backgroundColor,
+        hintStyle: TextStyle(
+            color: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.color
+                ?.withValues(alpha: AppSizesDouble.s0_5)),
+        fillColor: Theme.of(context).scaffoldBackgroundColor,
       ),
       cursorColor: ColorsManager.rose,
     );

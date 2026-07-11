@@ -17,19 +17,20 @@ class TotalAmountSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: ColorsManager.primaryColor,
-        borderRadius: BorderRadius.circular(AppSizesDouble.s20)
-      ),
+          color: Theme.of(context).primaryColor,
+          borderRadius: BorderRadius.circular(AppSizesDouble.s20)),
       width: double.infinity,
       height: AppSizesDouble.s150,
       child: Stack(
         alignment: Alignment.topLeft,
         children: [
           Positioned(
-            top: -35,
-            left: -screenSize(context).width/4,
-            child: SvgPicture.asset(AssetsManager.background, fit: BoxFit.cover,)
-          ),
+              top: -35,
+              left: -screenSize(context).width / 4,
+              child: SvgPicture.asset(
+                AssetsManager.background,
+                fit: BoxFit.cover,
+              )),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: AppPaddings.p20),
             child: Row(
@@ -41,39 +42,48 @@ class TotalAmountSection extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(StringsManager.totalAmount, style: Theme.of(context).textTheme.headlineSmall!.copyWith(color: ColorsManager.white),),
-                      SizedBox(height: AppSizesDouble.s15,),
-                      Text('${AppConstants.moneyAmount} ${StringsManager.EGP}', style: Theme.of(context).textTheme.headlineLarge,),
+                      Text(
+                        StringsManager.totalAmount,
+                        style: Theme.of(context)
+                            .textTheme
+                            .headlineSmall,
+                      ),
+                      SizedBox(
+                        height: AppSizesDouble.s15,
+                      ),
+                      Text(
+                        '${AppConstants.moneyAmount} ${StringsManager.EGP}',
+                        style: Theme.of(context).textTheme.headlineLarge,
+                      ),
                     ],
                   ),
                 ),
                 Expanded(
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      Text('${AppConstants.remainingRate <= 0?0:AppConstants.remainingRate.toStringAsFixed(1)}%', style: Theme.of(context).textTheme.titleMedium!.copyWith(fontSize: 20),),
-                      PieChart(
-                        PieChartData(
-                          sections: [
-                            PieChartSectionData(
-                              value: AppConstants.remainingRate,
-                              color: ColorsManager.rose,
-                              radius: AppSizesDouble.s7,
-                              showTitle: false
-                            ),
-                            PieChartSectionData(
-                              value: AppSizes.s100 - AppConstants.remainingRate,
-                              color: ColorsManager.grey,
-                              radius: AppSizesDouble.s7,
-                              showTitle: false
-                            ),
-                          ],
-                          startDegreeOffset: AppSizesDouble.s90N
-                        )
-                      ),
-                    ],
-                  )
-                )
+                    child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Text(
+                      '${AppConstants.remainingRate <= 0 ? 0 : AppConstants.remainingRate.toStringAsFixed(1)}%',
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium!
+                          .copyWith(fontSize: 18),
+                    ),
+                    PieChart(PieChartData(sections: [
+                      PieChartSectionData(
+                          value: AppConstants.remainingRate.clamp(0.0, 100.0),
+                          color: ColorsManager.rose,
+                          radius: AppSizesDouble.s7,
+                          showTitle: false),
+                      PieChartSectionData(
+                          value: 100.0 -
+                              AppConstants.remainingRate.clamp(0.0, 100.0),
+                          color: ColorsManager.grey,
+                          radius: AppSizesDouble.s7,
+                          showTitle: false),
+                    ], startDegreeOffset: AppSizesDouble.s90N)),
+                  ],
+                ))
               ],
             ),
           ),

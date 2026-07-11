@@ -13,26 +13,34 @@ class BottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CurvedNavigationBar(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      color: Theme.of(context).primaryColor,
-      index: index,
-      items: [
-        Padding(
-          padding: EdgeInsets.all(AppPaddings.p7),
-          child: SvgPicture.asset(AssetsManager.home, colorFilter: ColorFilter.mode(index == 0? ColorsManager.white:ColorsManager.grey1, BlendMode.srcIn)),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(AppPaddings.p7),
-          child: SvgPicture.asset(AssetsManager.add, colorFilter: ColorFilter.mode(index == 1? ColorsManager.white:ColorsManager.grey1, BlendMode.srcIn)),
-        ),
-        Padding(
-          padding: const EdgeInsets.all(AppPaddings.p7),
-          child: SvgPicture.asset(AssetsManager.history, colorFilter: ColorFilter.mode(index == 2? ColorsManager.white:ColorsManager.grey1, BlendMode.srcIn)),
-        ),
-      ],
-      animationCurve: Curves.fastEaseInToSlowEaseOut,
-      buttonBackgroundColor: ColorsManager.primaryColor,
-      onTap: onTap
-    );
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        color: Theme.of(context).primaryColor,
+        index: index,
+        items: [
+          Padding(
+            padding: EdgeInsets.all(AppPaddings.p7),
+            child: SvgPicture.asset(AssetsManager.home,
+                colorFilter: ColorFilter.mode(
+                    index == 0 ? ColorsManager.rose : ColorsManager.grey1,
+                    BlendMode.srcIn)),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(AppPaddings.p7),
+            child: SvgPicture.asset(AssetsManager.add,
+                colorFilter: ColorFilter.mode(
+                    index == 1 ? ColorsManager.rose : ColorsManager.grey1,
+                    BlendMode.srcIn)),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(AppPaddings.p7),
+            child: SvgPicture.asset(AssetsManager.history,
+                colorFilter: ColorFilter.mode(
+                    index == 2 ? ColorsManager.rose : ColorsManager.grey1,
+                    BlendMode.srcIn)),
+          ),
+        ],
+        animationCurve: Curves.fastEaseInToSlowEaseOut,
+        buttonBackgroundColor: Theme.of(context).primaryColor,
+        onTap: onTap);
   }
 }

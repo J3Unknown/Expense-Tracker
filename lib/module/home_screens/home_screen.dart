@@ -6,6 +6,7 @@ import 'package:expense_tracker/shared/components/values_manager.dart';
 import 'package:expense_tracker/shared/styles/colors_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:provider/provider.dart';
 
 import '../../layout/cubit/main_states.dart';
 import '../../shared/components/components.dart';
@@ -13,12 +14,12 @@ import '../../shared/components/icons_manager.dart';
 import '../../shared/network/local/theme_changer.dart';
 
 class HomeScreen extends StatelessWidget {
-  HomeScreen({super.key});
-
-  final ThemeChanger _themeChanger = ThemeChanger();
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final themeChanger = Provider.of<ThemeChanger>(context);
+
     return BlocConsumer<MainCubit, MainStates>(
       listener: (context, state) {},
       builder: (context, state) => Padding(
@@ -29,14 +30,17 @@ class HomeScreen extends StatelessWidget {
             Align(
               alignment: Alignment.topRight,
               child: IconButton(
-                onPressed: (){
-                  _themeChanger.changeTheme();
-                },
-                icon: Icon(
-                  _themeChanger.isDark?IconsManager.darkThemeIcon:IconsManager.lightThemeIcon,
-                  color: _themeChanger.isDark?ColorsManager.white:ColorsManager.black,
-                )
-              ),
+                  onPressed: () {
+                    themeChanger.changeTheme();
+                  },
+                  icon: Icon(
+                    themeChanger.isDark
+                        ? IconsManager.darkThemeIcon
+                        : IconsManager.lightThemeIcon,
+                    color: themeChanger.isDark
+                        ? ColorsManager.white
+                        : ColorsManager.black,
+                  )),
             ),
             TotalAmountSection(),
             Row(
@@ -77,7 +81,10 @@ class HomeScreen extends StatelessWidget {
                     },
                     child: Text(
                       'See More',
-                      style: Theme.of(context).textTheme.titleMedium!.copyWith(color: ColorsManager.grey1),
+                      style: Theme.of(context)
+                          .textTheme
+                          .titleMedium!
+                          .copyWith(color: ColorsManager.grey1),
                     ))
               ],
             ),
@@ -100,7 +107,11 @@ class IncomeOutcomeSections extends StatelessWidget {
   final double amount;
   final Color backgroundColor;
 
-  const IncomeOutcomeSections({super.key, required this.title, required this.amount, required this.backgroundColor});
+  const IncomeOutcomeSections(
+      {super.key,
+      required this.title,
+      required this.amount,
+      required this.backgroundColor});
 
   @override
   Widget build(BuildContext context) {
@@ -121,11 +132,17 @@ class IncomeOutcomeSections extends StatelessWidget {
                   FittedBox(
                       child: Text(
                     title,
-                    style: Theme.of(context).textTheme.headlineSmall,
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall!
+                        .copyWith(color: ColorsManager.black),
                   )),
                   Text(
                     amount.toString(),
-                    style: Theme.of(context).textTheme.headlineSmall,
+                    style: Theme.of(context)
+                        .textTheme
+                        .headlineSmall!
+                        .copyWith(color: ColorsManager.black),
                   ),
                 ],
               ),
